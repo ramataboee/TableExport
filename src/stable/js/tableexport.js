@@ -591,6 +591,44 @@
         saveAs(new Blob([data], { type: mime + ";" + this.charset }), name + extension, true);
       }
     },
+    exportMultipleWorksheets: function(data, mime, name, sheetnames, extension, merges = {}, cellWidths = {}){
+      let sheetdata = null;
+      let key = extension.substring(1);
+
+      if(_isEnhanced(key)){
+        let wb = new this.Workbook();
+
+        for(let i in data){
+          wb.SheetNames.push(this.escapeHtml(sheetnames[i]));
+          wb.Sheets[sheetnames[i]] = this.createSheet(data[i], merges[sheetnames[i]] || [], cols_width[sheetnames[i] || []]);
+        }
+        const boolType = this.getBookType(key);
+        const wopts = {
+          bookType: boolType,
+          bookSST: false,
+          type: 'binary',
+        },
+        wbout = XLSX.write(wb, wopts);
+
+        sheetdata = this.string2ArrayBuffer(wbout);
+      }
+
+      if(sheetdata){
+        if (_isMobile && (format === _FORMAT.CSV || format === _FORMAT.TXT)) {
+          var dataURI = "data:" + mime + ";" + this.charset + "," + sheetdata;
+          this.downloadDataURI(dataURI, name, extension);
+        } else {
+          // TODO: error and fallback when `saveAs` not available
+          saveAs(new Blob([sheetdata], { type: mime + ";" + this.charset }), name + extension, true);
+        }
+      }
+    },
+    getCellWidths: function(widths){
+
+    },
+    getCellHeights: function(heights){
+
+    },
     downloadDataURI: function(dataURI, name, extension) {
       var encodedUri = encodeURI(dataURI);
       var link = document.createElement("a");
